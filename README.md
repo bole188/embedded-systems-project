@@ -36,3 +36,25 @@ Prilikom konfiguracije Linux kernela potrebno je uključiti i odgovarajući draj
       Chemical Sensors --->
         AMS CCS811 VOC sensor & AMS iAQ-Core VOC sensors
 </pre>
+Izvorni kod drajvera je dostupan na narednoj putanji:
+<pre>
+  ~/buildroot/output/build/linux-socfpga-6.1.38-lts/drivers/iio/chemical$ code ccs811.c
+</pre>
+
+Opis hardvera je dat u _.dts_ fajlu. U njemu je potrebno definisati čvor za ccs811 uređaj. Kao pomoć možemo koristiti dokumentaciju koju nalazimo na sledećoj putanji:  
+<pre>
+  ~/buildroot/output/build/linux-socfpga-6.1.38-lts/Documentation/devicetree/bindings/iio/chemical$ code ams,ccs811.yaml
+</pre>
+Prema toj dokumentaciji definišemo prethodno pomenuti čvor:  
+<pre>
+  &i2c2 {
+    status = "okay";
+    clock-frequency = <100000>;
+	  voc@5a {
+        compatible = "ams,ccs811";
+        reg = <0x5a>;
+		    reset-gpios = <&gpio_altr 0 GPIO_ACTIVE_LOW>;		    
+      };
+  };
+</pre>
+Ovo je minimalna konfiguracija koja podrazumijeva vezivanje WKE pina na GND.
