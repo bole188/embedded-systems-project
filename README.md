@@ -15,10 +15,7 @@ Konfiguracija za alat _genimage_ koji kreira finalnu sliku diska (npr. SD kartic
 Device Tree Source fajl opisuje hardver sistema (CPU, memorija, periferije). Kernel koristi ovaj opis da bi znao kako da komunicira sa hardverom. Specifičan je za Cyclone V SoC na DE1-SoC ploči.  
 ## de1-soc-handoff.patch
 _Patch_ fajl mijenja postojeći izvorni kod (najčešće U-Boot ili kernel) kako bi odgovarao specifičnostima _DE1-SoC_ platforme. Obično uključuje _handoff_ informacije između FPGA i HPS dijela sistema. Primjenjuje se tokom build procesa automatski.  
-# Povezivanje  
-_Air quality 3 Click_ koristi I2C komunikacioni protokol. Značajni pinovi modula su još RST i WKE. Prethodno navedeni pinovi su aktivni na niskom logičkom nivou. I2C linije (SCL i SDA) moraju imati _pull-up_ otpornike. Za frekvenciju od 100kHz otpornost ovih otpornika je po 4k7. Modul radi na 3.3V.  
-Minimalna konfiguracija uključuje, pored I2C linija i linija za napajanje, uzemljenje WKE pina. Ukoliko sistem ne detektuje RST, on će koristiti hardversko resetovanje pri komunikaciji sa modulom.  
-# Rješenje
+# _Buildroot_ konfiguracija i konfiguracija Linux kernela
 Za generisanje svih potrebnih artefakata se koristi alat _Buildroot_.  
 _Buildroot_ je alat koji automatski generiše kompletan ugrađeni Linux sistem (_toolchain_, kernel, _root filesystem_) iz izvornog koda.  
 Na prvom mjestu potrebno je klonirati _Buildroot_ repozitorijum, korištena verzija za ovaj projekat jeste 2024.02. Potrebno se prebaciti na odgovarajuću granu.  
@@ -60,4 +57,25 @@ Prema toj dokumentaciji definišemo prethodno pomenuti čvor:
       };
   };
 </pre>
-Ovo je minimalna konfiguracija koja podrazumijeva vezivanje WKE pina na GND. 
+Ovo je minimalna konfiguracija koja podrazumijeva vezivanje WKE pina na GND.  
+# Povezivanje  
+_Air quality 3 Click_ koristi I2C komunikacioni protokol. Značajni pinovi modula su još RST i WKE. Prethodno navedeni pinovi su aktivni na niskom logičkom nivou. I2C linije (SCL i SDA) moraju imati _pull-up_ otpornike. Za frekvenciju od 100kHz otpornost ovih otpornika je po 4k7. Modul radi na 3.3V.  
+Minimalna konfiguracija uključuje, pored I2C linija i linija za napajanje, uzemljenje WKE pina. Ukoliko sistem ne detektuje RST, on će koristiti hardversko resetovanje pri komunikaciji sa modulom.  
+# Problemi
+Nakon pokretanja sistema, javljaju se problemi prilikom detekcije uređaja.  
+<pre>
+# i2cdetect -r 2  
+WARNING! This program can confuse your I2C bus, cause data loss and worse! I will probe file /dev/i2c-2 using receive byte commands. I will probe address range 0x08-0x77. Continue? [Y/n] y  
+0 1 2 3 4 5 6 7 8 9 a b c d e f  
+00: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+70: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+</pre>
+  
+Isti problemi se javljaju i ukoliko se promijeni I2C magistrala/adresa uređaja.  
+Prilikom analize problema spajanjem osciloskopa na I2C linije, primjećuje se da je svaka komunikacija prema uređaju neprimjećena. Uređaj svaki put odgovara sa NACK signalom. To se primjećuje analizom SDA linije prilikom devete (poslednje) rastuće ivice SCL linije. SDA je tada na visokom logičkom nivou.  
