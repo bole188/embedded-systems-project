@@ -15,6 +15,9 @@ Konfiguracija za alat _genimage_ koji kreira finalnu sliku diska (npr. SD kartic
 Device Tree Source fajl opisuje hardver sistema (CPU, memorija, periferije). Kernel koristi ovaj opis da bi znao kako da komunicira sa hardverom. Specifičan je za Cyclone V SoC na DE1-SoC ploči.  
 ## de1-soc-handoff.patch
 _Patch_ fajl mijenja postojeći izvorni kod (najčešće U-Boot ili kernel) kako bi odgovarao specifičnostima _DE1-SoC_ platforme. Obično uključuje _handoff_ informacije između FPGA i HPS dijela sistema. Primjenjuje se tokom build procesa automatski.  
+# Povezivanje  
+_Air quality 3 Click_ koristi I2C komunikacioni protokol. Značajni pinovi modula su još RST i WKE. Prethodno navedeni pinovi su aktivni na niskom logičkom nivou. I2C linije (SCL i SDA) moraju imati _pull-up_ otpornike. Za frekvenciju od 100kHz otpornost ovih otpornika je po 4k7. Modul radi na 3.3V.  
+Minimalna konfiguracija uključuje, pored I2C linija i linija za napajanje, uzemljenje WKE pina. Ukoliko sistem ne detektuje RST, on će koristiti hardversko resetovanje pri komunikaciji sa modulom.  
 # Rješenje
 Za generisanje svih potrebnih artefakata se koristi alat _Buildroot_.  
 _Buildroot_ je alat koji automatski generiše kompletan ugrađeni Linux sistem (_toolchain_, kernel, _root filesystem_) iz izvornog koda.  
@@ -53,8 +56,8 @@ Prema toj dokumentaciji definišemo prethodno pomenuti čvor:
 	  voc@5a {
         compatible = "ams,ccs811";
         reg = <0x5a>;
-		    reset-gpios = <&gpio_altr 0 GPIO_ACTIVE_LOW>;		    
+		reset-gpios = <&gpio_altr 0 GPIO_ACTIVE_LOW>;		    
       };
   };
 </pre>
-Ovo je minimalna konfiguracija koja podrazumijeva vezivanje WKE pina na GND.
+Ovo je minimalna konfiguracija koja podrazumijeva vezivanje WKE pina na GND. 
